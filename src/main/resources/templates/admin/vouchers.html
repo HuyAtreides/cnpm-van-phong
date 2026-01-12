@@ -61,7 +61,11 @@
                                 <span th:text="${#dates.format(v.dateEnd, 'dd/MM/yyyy')}"></span>
                             </td>
                             <td>
-                                <span th:if="${v.isDelete == 0}" class="badge bg-success">Hoạt động</span>
+                                <span th:if="${v.isDelete == 0}"
+                                      th:class="${v.dateEnd.time < #dates.createNow().time} ? 'badge bg-danger' : 'badge bg-success'">
+                                    <span th:if="${v.dateEnd.time < #dates.createNow().time}">Hết hạn</span>
+                                    <span th:if="${v.dateEnd.time >= #dates.createNow().time}">Hoạt động</span>
+                                </span>
                                 <span th:if="${v.isDelete == 1}" class="badge bg-danger">Đã xóa</span>
                             </td>
                             <td>
