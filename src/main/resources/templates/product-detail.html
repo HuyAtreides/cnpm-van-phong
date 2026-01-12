@@ -174,13 +174,49 @@
                         </svg>
                         Thêm vào giỏ hàng
                     </button>
-                    
-                    <form th:action="@{/wishlist/add}" method="post" style="margin-top: 1rem;">
-                        <input type="hidden" name="productId" th:value="${product.productId}">
-                        <button type="submit" class="btn btn-outline-danger" style="width: 100%; border-radius: 50px; padding: 0.8rem; font-weight: 600; transition: all 0.3s;">
-                            ❤️ Thêm vào yêu thích
-                        </button>
-                    </form>
+
+                    <!-- Wishlist button -->
+                    <div style="margin-top: 1rem;">
+
+                        <!-- Chưa đăng nhập -->
+                        <div sec:authorize="!isAuthenticated()">
+                            <a th:href="@{/login}"
+                               class="btn btn-outline-danger"
+                               style="width: 100%; border-radius: 50px; padding: 0.8rem; font-weight: 600;">
+                                🤍 Đăng nhập để yêu thích
+                            </a>
+                        </div>
+
+                        <!-- Đã đăng nhập -->
+                        <div sec:authorize="isAuthenticated()">
+
+                            <!-- Chưa có trong wishlist -->
+                            <form th:if="${!inWishlist}"
+                                  th:action="@{/wishlist/add}"
+                                  method="post">
+                                <input type="hidden" name="productId" th:value="${product.productId}">
+                                <button type="submit"
+                                        class="btn btn-outline-danger"
+                                        style="width: 100%; border-radius: 50px; padding: 0.8rem; font-weight: 600;">
+                                    🤍 Thêm vào yêu thích
+                                </button>
+                            </form>
+
+                            <!-- Đã có trong wishlist -->
+                            <form th:if="${inWishlist}"
+                                  th:action="@{/wishlist/remove}"
+                                  method="post">
+                                <input type="hidden" name="productId" th:value="${product.productId}">
+                                <button type="submit"
+                                        class="btn btn-danger"
+                                        style="width: 100%; border-radius: 50px; padding: 0.8rem; font-weight: 600;">
+                                    ❤️ Đã yêu thích
+                                </button>
+                            </form>
+
+                        </div>
+                    </div>
+
                 </div>
                 
                 <div th:if="${#lists.isEmpty(product.productTypes)}" class="alert alert-warning">

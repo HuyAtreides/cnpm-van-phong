@@ -40,7 +40,15 @@ public class WishlistService {
         return wishlistRepository.save(newWishlist);
     }
 
-    
+    public boolean isProductInWishlist(Integer customerId, Integer productId) {
+        return wishlistRepository
+                .existsByCustomer_UserIdAndProducts_ProductId(customerId, productId);
+    }
+
+    public List<Integer> getWishlistProductIds(Integer customerId) {
+        return wishlistRepository.findWishlistProductIds(customerId);
+    }
+
     public void addToWishlist(Integer customerId, Integer productId) {
         Wishlist wishlist = getOrCreateWishlist(customerId);
         
