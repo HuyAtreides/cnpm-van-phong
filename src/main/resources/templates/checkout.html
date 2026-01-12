@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán - Ergoffice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <div th:replace="~{fragments/navigation :: user-menu-styles}"></div>
+    <style>
+        .checkout-page { padding: 40px 0; background-color: #f8f9fa; }
+        .checkout-container { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; }
+        .checkout-form, .order-summary { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .form-control { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; }
+        .summary-item { display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+        .total-row { font-size: 1.25rem; font-weight: 700; margin-top: 20px; border-top: 2px solid #e2e8f0; padding-top: 20px; }
+        .btn-place-order { width: 100%; padding: 16px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 1.1rem; cursor: pointer; margin-top: 20px; transition: all 0.3s; }
+        .btn-place-order:hover { background: #1d4ed8; transform: translateY(-2px); }
+        
+        .payment-methods { margin-top: 20px; }
+        .payment-method-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
+        .payment-method-card:hover { background: #f8fafc; border-color: #cbd5e1; }
+        .payment-method-card.active { border-color: #2563eb; background: #eff6ff; }
+        .payment-method-input { display: none; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+
+<div class="checkout-page">
+    <div class="container">
+        <h1>Thanh Toán</h1>
+        
+        <form th:action="@{/checkout}" method="post" class="checkout-container" id="checkoutForm">
+            
+            <!-- Hidden inputs for selected items -->
+            <th:block th:if="${selectedItemIds != null}">
+                <input type="hidden" name="selectedItemIds" th:each="id : ${selectedItemIds}" th:value="${id}">
+            </th:block>
+            
+            <div class="checkout-form">
+                <h2>Thông tin giao hàng</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Họ tên</label>
+                    <input type="text" class="form-control" th:value="${customer.name}" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Số điện thoại <span style="color:red">*</span></label>
+                    <input type="tel" name="phone" class="form-control" th:value="${customer.phone}" required placeholder="0912345678">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Địa chỉ (Tỉnh/Thành, Quận/Huyện, Phường/Xã) <span style="color:red">*</span></label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <input type="text" name="city" class="form-control" required placeholder="Tỉnh/TP">
+                        <input type="text" name="district" class="form-control" required placeholder="Quận/Huyện">
+                        <input type="text" name="ward" class="form-control" required placeholder="Phường/Xã">
+                    </div>
+                    <input type="text" name="street" class="form-control" th:value="${customer.address}" required placeholder="Số nhà, tên đường">
+                </div>
+                
+                <div class="payment-methods">
+                    <h3>Phương thức thanh toán</h3>
+                    
+                    <label class="payment-method-card active" onclick="selectPayment('COD')">
+                        <input type="radio" name="paymentMethod" value="COD" class="payment-method-input" checked>
+                        <span>💵 Thanh toán khi giao hàng (COD)</span>
+                    </label>
+                    
+                    <label class="payment-method-card" onclick="selectPayment('QR')">
+                        <input type="radio" name="paymentMethod" value="QR" class="payment-method-input">
+                        <span>📱 Quét mã QR (Chuyển khoản)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="order-summary">
+                <h2>Đơn hàng của bạn</h2>
+                
+                <div th:each="item : ${checkoutItems}" class="summary-item">
+                    <div>
+                        <div th:text="${item.productType.product.name}" style="font-weight:500">Tên SP</div>
+                        <div style="font-size:0.9em; color:#666">
+                            <span th:text="${item.productType.color}"></span> / 
+                            SL: <span th:text="${item.quantity}"></span>
+                        </div>
+                    </div>
+                    <div th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' đ'">100.000 đ</div>
+                </div>
+
+                <!-- Voucher -->
+                <div class="summary-item" style="display: block; border-bottom: none;">
+                    <label class="form-label">Mã Voucher</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" name="voucherCode" id="voucherCode" class="form-control" 
+                               th:value="${voucherCode}" placeholder="Nhập mã giảm giá">
+                        <button type="button" class="btn btn-outline-primary" style="white-space: nowrap;" 
+                                onclick="openVoucherModal()">
+                            <i class="fas fa-ticket-alt"></i> Chọn
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Breakdown -->
+                <div class="summary-item">
+                    <span>Tạm tính:</span>
+                    <span id="subtotalDisplay" th:data-value="${subtotal}" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">1.000.000 VNĐ</span>
+                </div>
+                
+                <div class="summary-item" th:if="${discount > 0}" style="color: #10b981;">
+                    <span>Giảm giá:</span>
+                    <span>- <span th:text="${#numbers.formatDecimal(discount, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ</span>
+                </div>
+                
+                <div class="summary-item" th:if="${voucherError}" style="color: #ef4444; font-size: 0.9em; border-bottom: none; padding-top: 0;">
+                    <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${voucherError}">Lỗi voucher</span>
+                </div>
+
+                <div class="summary-item total-row">
+                    <span>Tổng cộng:</span>
+                    <span th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'" style="color:#2563eb">1.000.000 VNĐ</span>
+                </div>
+
+                <button type="submit" class="btn-place-order" id="btnBuyNow">Mua Ngay</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- QR Payment Modal (Premium Design) -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                <h5 class="modal-title mx-auto"><i class="fas fa-qrcode me-2"></i>Thanh Toán Qua QR</h5>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3 text-center">
+                    <p class="text-muted mb-1">Tổng thanh toán</p>
+                    <h3 class="text-primary fw-bold mx-auto" style="text-align: center; width: 100%;" 
+                        th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0 VNĐ</h3>
+                </div>
+                
+                <div class="text-center mb-4">
+                    <div class="qr-container" style="background: white; padding: 15px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee;">
+                        <!-- Generate QR dynamically based on order info context if possible, otherwise generic -->
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PaymentToErgoffice" 
+                             alt="QR Code" style="width: 200px; height: 200px; display: block;">
+                    </div>
+                </div>
+
+                <div class="transfer-info text-start bg-light p-3 rounded-3 mb-4" style="font-size: 0.9rem;">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary">Ngân hàng:</span>
+                        <span class="fw-bold">TPBank</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary">Số tài khoản:</span>
+                        <span class="fw-bold text-dark">0123 4567 8999</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary">Chủ tài khoản:</span>
+                        <span class="fw-bold text-uppercase">ERGOFFICE STORE</span>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-center gap-2 text-warning fw-medium fade-in-out">
+                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                    <span id="qrStatus">Đang chờ xác nhận thanh toán...</span>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Thoát</button>
+                <button type="button" class="btn btn-primary px-5 fw-bold" onclick="confirmQrPayment()">
+                    <i class="fas fa-check-circle me-2"></i>Đã Thanh Toán
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Voucher Selection Modal -->
+<div class="modal fade" id="voucherModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold"><i class="fas fa-ticket-alt text-primary me-2"></i>Chọn Voucher</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div id="voucherList" class="row g-3">
+                    <!-- Vouchers will be loaded here -->
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 text-muted">Đang tải danh sách voucher...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function selectPayment(method) {
+        document.querySelectorAll('.payment-method-card').forEach(el => el.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        
+        const radio = event.currentTarget.querySelector('input');
+        radio.checked = true;
+    }
+    
+    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+        if (paymentMethod === 'QR') {
+            e.preventDefault();
+            // Show QR Modal
+            const myModal = new bootstrap.Modal(document.getElementById('qrModal'));
+            myModal.show();
+        }
+    });
+    
+    function confirmQrPayment() {
+        // Submit form after confirming QR
+        document.getElementById('checkoutForm').submit();
+    }
+    
+    // Voucher Logic
+    function openVoucherModal() {
+        const myModal = new bootstrap.Modal(document.getElementById('voucherModal'));
+        myModal.show();
+        loadVouchers();
+    }
+    
+    async function loadVouchers() {
+        const container = document.getElementById('voucherList');
+        try {
+            const response = await fetch('/api/vouchers');
+            const vouchers = await response.json();
+            
+            if (vouchers.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-ticket-alt fa-3x text-muted mb-3" style="opacity: 0.3;"></i>
+                        <p class="text-muted">Hiện không có voucher nào khả dụng.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = vouchers.map(v => `
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm voucher-card" style="cursor: pointer; transition: all 0.2s;" onclick="applyVoucher('${v.code}')">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="voucher-left bg-primary text-white p-3 rounded-start d-flex flex-column align-items-center justify-content-center" style="width: 80px; height: 100%;">
+                                <i class="fas fa-percent fa-lg"></i>
+                            </div>
+                            <div class="voucher-right p-3 flex-grow-1">
+                                <h6 class="fw-bold text-primary mb-1">${v.code}</h6>
+                                <p class="mb-1 small fw-bold">Giảm ${v.discountPercent || v.discount || 0}%</p>
+                                <p class="mb-0 small text-muted">Đơn tối thiểu: ${new Intl.NumberFormat('vi-VN').format(v.minOrderValue || 0)} đ</p>
+                                <small class="text-muted" style="font-size: 0.75rem;">HSD: ${new Date(v.dateEnd).toLocaleDateString('vi-VN')}</small>
+                            </div>
+                            <div class="voucher-action px-3">
+                                <button class="btn btn-sm btn-outline-primary rounded-pill">Dùng</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+        } catch (error) {
+            console.error('Error loading vouchers:', error);
+            container.innerHTML = '<p class="text-danger text-center">Lỗi khi tải danh sách voucher.</p>';
+        }
+    }
+    
+    async function applyVoucher(code) {
+        document.getElementById('voucherCode').value = code;
+        
+        // Close modal
+        const modalEl = document.getElementById('voucherModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        modalInstance.hide();
+        
+        // Calculate discount via API
+        await validateAndApplyVoucher(code);
+    }
+    
+    async function validateAndApplyVoucher(code) {
+        if (!code || code.trim() === '') {
+            // Reset to original
+            resetPriceBreakdown();
+            return;
+        }
+        
+        // Get subtotal from data attribute
+        const subtotalElement = document.getElementById('subtotalDisplay');
+        const subtotal = subtotalElement ? parseFloat(subtotalElement.getAttribute('data-value')) : 0;
+        
+        if (subtotal === 0) {
+            showVoucherError('Không thể tính toán giá trị đơn hàng');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/vouchers/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ voucherCode: code, subtotal: subtotal })
+            });
+            
+            const result = await response.json();
+            
+            if (result.valid) {
+                updatePriceBreakdown(subtotal, result.discount, result.finalTotal);
+            } else {
+                showVoucherError(result.error);
+                resetPriceBreakdown();
+            }
+        } catch (error) {
+            console.error('Error validating voucher:', error);
+            showVoucherError('Lỗi khi kiểm tra voucher');
+            resetPriceBreakdown();
+        }
+    }
+    
+    function updatePriceBreakdown(subtotal, discount, finalTotal) {
+        // Update or create discount row
+        let discountRow = document.querySelector('.discount-row');
+        if (!discountRow && discount > 0) {
+            const summaryContainer = document.querySelector('.summary-item.total-row').parentElement;
+            discountRow = document.createElement('div');
+            discountRow.className = 'summary-item discount-row';
+            discountRow.style.color = '#10b981';
+            summaryContainer.insertBefore(discountRow, document.querySelector('.summary-item.total-row'));
+        }
+        
+        if (discount > 0 && discountRow) {
+            discountRow.innerHTML = `
+                <span>Giảm giá:</span>
+                <span>- ${new Intl.NumberFormat('vi-VN').format(discount)} VNĐ</span>
+            `;
+            discountRow.style.display = 'flex';
+        } else if (discountRow) {
+            discountRow.style.display = 'none';
+        }
+        
+        // Update total
+        const totalSpan = document.querySelector('.summary-item.total-row span:last-child');
+        if (totalSpan) {
+            totalSpan.textContent = new Intl.NumberFormat('vi-VN').format(finalTotal) + ' VNĐ';
+        }
+        
+        // Update QR modal total
+        const qrTotal = document.querySelector('#qrModal h3');
+        if (qrTotal) {
+            qrTotal.textContent = new Intl.NumberFormat('vi-VN').format(finalTotal) + ' VNĐ';
+        }
+        
+        // Hide error if any
+        const errorRow = document.querySelector('.voucher-error-row');
+        if (errorRow) errorRow.style.display = 'none';
+    }
+    
+    function resetPriceBreakdown() {
+        const discountRow = document.querySelector('.discount-row');
+        if (discountRow) discountRow.style.display = 'none';
+        
+        const errorRow = document.querySelector('.voucher-error-row');
+        if (errorRow) errorRow.style.display = 'none';
+        
+        // Reset to subtotal
+        const subtotalText = document.querySelector('.summary-item:first-of-type span:last-child')?.textContent;
+        const totalSpan = document.querySelector('.summary-item.total-row span:last-child');
+        if (totalSpan && subtotalText) {
+            totalSpan.textContent = subtotalText;
+        }
+    }
+    
+    function showVoucherError(message) {
+        let errorRow = document.querySelector('.voucher-error-row');
+        if (!errorRow) {
+            const summaryContainer = document.querySelector('.summary-item.total-row').parentElement;
+            errorRow = document.createElement('div');
+            errorRow.className = 'summary-item voucher-error-row';
+            errorRow.style.color = '#ef4444';
+            errorRow.style.fontSize = '0.9em';
+            errorRow.style.borderBottom = 'none';
+            errorRow.style.paddingTop = '0';
+            summaryContainer.insertBefore(errorRow, document.querySelector('.summary-item.total-row'));
+        }
+        
+        errorRow.innerHTML = `<i class="fas fa-exclamation-circle me-1"></i> ${message}`;
+        errorRow.style.display = 'flex';
+    }
+    
+    // Listen to voucher input changes
+    document.addEventListener('DOMContentLoaded', function() {
+        const voucherInput = document.getElementById('voucherCode');
+        if (voucherInput) {
+            // Add button to manually apply
+            const applyBtn = document.createElement('button');
+            applyBtn.type = 'button';
+            applyBtn.className = 'btn btn-sm btn-success ms-2';
+            applyBtn.textContent = 'Áp dụng';
+            applyBtn.onclick = () => validateAndApplyVoucher(voucherInput.value);
+            
+            const btnContainer = voucherInput.parentElement;
+            if (!btnContainer.querySelector('.btn-success')) {
+                btnContainer.appendChild(applyBtn);
+            }
+        }
+    });
+</script>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 Ergoffice. All rights reserved.</p>
+    </div>
+</footer>
+<div th:replace="~{fragments/navigation :: user-menu-scripts}"></div>
+</body>
+</html>

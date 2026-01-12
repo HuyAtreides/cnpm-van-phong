@@ -1,0 +1,18 @@
+<div th:fragment="sidebar" class="sidebar d-flex flex-column p-3">
+    <h4 class="mb-4 text-center">Admin Portal</h4>
+    <a href="/admin/dashboard" th:classappend="${current == 'dashboard'} ? 'active' : ''"><i class="fas fa-home me-2"></i>Tổng Quan</a>
+    <a href="/admin/staff" th:classappend="${current == 'staff'} ? 'active' : ''"><i class="fas fa-users-cog me-2"></i>Nhân Viên</a>
+    <a href="/admin/customers" th:classappend="${current == 'customers'} ? 'active' : ''"><i class="fas fa-users me-2"></i>Khách Hàng</a>
+    <a href="/admin/orders" th:classappend="${current == 'orders'} ? 'active' : ''"><i class="fas fa-shopping-cart me-2"></i>Đơn Hàng</a>
+    <a href="/admin/refunds" th:classappend="${current == 'refunds'} ? 'active' : ''"><i class="fas fa-undo me-2"></i>Đổi Trả</a>
+    <a href="/admin/products" th:classappend="${current == 'products'} ? 'active' : ''"><i class="fas fa-box me-2"></i>Sản Phẩm</a>
+    <a href="/admin/vouchers" th:classappend="${current == 'vouchers'} ? 'active' : ''"><i class="fas fa-ticket-alt me-2"></i>Voucher</a>
+    <a href="/admin/stats" th:classappend="${current == 'stats'} ? 'active' : ''"><i class="fas fa-chart-line me-2"></i>Thống Kê</a>
+    <a href="/admin/reviews" th:classappend="${current == 'reviews'} ? 'active' : ''"><i class="fas fa-star me-2"></i>Đánh Giá</a>
+    <a href="/admin/content" th:classappend="${current == 'content'} ? 'active' : ''"><i class="fas fa-newspaper me-2"></i>Nội Dung</a>
+    <hr>
+    <div class="mt-auto">
+        <a href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Đăng Xuất</a>
+    </div>
+</div>
+

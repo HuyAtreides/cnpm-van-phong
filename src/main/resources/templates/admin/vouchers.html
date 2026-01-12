@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Voucher - Ergoffice Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar { height: 100vh; background: #2c3e50; color: white; position: fixed; width: 250px; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px 20px; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; color: white; }
+        .main-content { margin-left: 250px; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{admin/fragments/sidebar :: sidebar(current='vouchers')}"></div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Quản lý Voucher</h2>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addVoucherModal">
+                <i class="fas fa-plus"></i> Thêm Voucher Mới
+            </button>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Mã Code</th>
+                            <th>Giảm giá</th>
+                            <th>Đơn tối thiểu</th>
+                            <th>Thời gian</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="v : ${vouchers}">
+                            <td th:text="${v.voucherId}">1</td>
+                            <td th:text="${v.code}" class="fw-bold">WELCOME</td>
+                            <td>
+                                <!-- Check type safely or just show generic -->
+                                <span th:text="${v.discount} + '%'">10%</span>
+                            </td>
+                            <td>
+                                <!-- Need to cast or check if it is VoucherByPrice to show MinValue -->
+                                <span th:if="${v instanceof T(org.example.vanphong.model.VoucherByPrice)}"
+                                      th:text="${#numbers.formatDecimal(v.minOrderValue, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                </span>
+                            </td>
+                            <td>
+                                <span th:text="${#dates.format(v.dateStart, 'dd/MM/yyyy')}"></span> - 
+                                <span th:text="${#dates.format(v.dateEnd, 'dd/MM/yyyy')}"></span>
+                            </td>
+                            <td>
+                                <span th:if="${v.isDelete == 0}" class="badge bg-success">Hoạt động</span>
+                                <span th:if="${v.isDelete == 1}" class="badge bg-danger">Đã xóa</span>
+                            </td>
+                            <td>
+                                <button th:if="${v.isDelete == 0}" 
+                                        class="btn btn-sm btn-primary me-1" 
+                                        th:onclick="'editVoucher(' + ${v.voucherId} + ')'">
+                                    <i class="fas fa-edit"></i> Sửa
+                                </button>
+                                <form th:if="${v.isDelete == 0}" 
+                                      th:action="@{/admin/vouchers/delete/{id}(id=${v.voucherId})}" 
+                                      method="post" onsubmit="return confirm('Bạn có chắc muốn xóa voucher này?')" style="display: inline-block;">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Xóa
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Voucher Modal -->
+<div class="modal fade" id="voucherModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form id="voucherForm" th:action="@{/admin/vouchers/add}" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Thêm Voucher Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="voucherId" id="voucherId">
+                <div class="mb-3">
+                    <label class="form-label">Mã Code <span class="text-danger">*</span></label>
+                    <input type="text" name="code" id="code" class="form-control" required placeholder="VD: SALE2025" style="text-transform: uppercase;">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Ngày bắt đầu</label>
+                        <input type="date" name="dateStart" id="dateStart" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Ngày kết thúc</label>
+                        <input type="date" name="dateEnd" id="dateEnd" class="form-control" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Đơn hàng tối thiểu (VNĐ)</label>
+                    <input type="number" name="minOrderValue" id="minOrderValue" class="form-control" value="0" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Phần trăm giảm (%)</label>
+                    <input type="number" name="discountPercent" id="discountPercent" class="form-control" min="0" max="100" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Giảm tối đa (VNĐ) (Optional)</label>
+                    <input type="number" name="maxDiscount" id="maxDiscount" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="submit" class="btn btn-primary" id="btnSubmit">Lưu Voucher</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Reset form when adding new
+    document.querySelector('[data-bs-target="#addVoucherModal"]').addEventListener('click', function() {
+        document.getElementById('voucherForm').reset();
+        document.getElementById('voucherForm').action = '/admin/vouchers/add';
+        document.getElementById('modalTitle').textContent = 'Thêm Voucher Mới';
+        document.getElementById('voucherId').value = '';
+        document.getElementById('code').readOnly = false;
+        
+        // Show modal manually since ID changed
+        const myModal = new bootstrap.Modal(document.getElementById('voucherModal'));
+        myModal.show();
+    });
+
+    // Handle Edit
+    function editVoucher(id) {
+        fetch('/admin/vouchers/' + id)
+            .then(response => response.json())
+            .then(data => {
+                // Populate form
+                document.getElementById('voucherId').value = data.voucherId;
+                document.getElementById('code').value = data.code;
+                // document.getElementById('code').readOnly = true; // Optional: prevent code change
+                
+                // Format dates yyyy-MM-dd
+                document.getElementById('dateStart').value = data.dateStart.split('T')[0];
+                document.getElementById('dateEnd').value = data.dateEnd.split('T')[0];
+                
+                document.getElementById('minOrderValue').value = data.minOrderValue;
+                document.getElementById('discountPercent').value = data.discountPercent;
+                document.getElementById('maxDiscount').value = data.maxDiscount;
+                
+                // Update Modal UI
+                document.getElementById('modalTitle').textContent = 'Cập Nhật Voucher';
+                document.getElementById('voucherForm').action = '/admin/vouchers/update';
+                
+                const myModal = new bootstrap.Modal(document.getElementById('voucherModal'));
+                myModal.show();
+            })
+            .catch(err => console.error(err));
+    }
+</script>
+</body>
+</html>

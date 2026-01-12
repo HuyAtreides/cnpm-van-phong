@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chỉnh Sửa Bài Viết | Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar { height: 100vh; background: #2c3e50; color: white; position: fixed; width: 250px; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px 20px; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; color: white; }
+        .main-content { margin-left: 250px; padding: 20px; }
+        #editor { height: 400px; background: white; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{admin/fragments/sidebar :: sidebar(current='content')}"></div>
+
+<div class="main-content">
+    <h2 class="mb-4">Chỉnh Sửa Bài Viết</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <form th:action="@{/admin/content/blogs/save}" th:object="${blog}" method="post" id="blogForm">
+                <input type="hidden" th:field="*{blogId}" />
+                
+                <div class="mb-3">
+                    <label class="form-label">Tiêu Đề</label>
+                    <input type="text" class="form-control" th:field="*{blogTitle}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Nội Dung</label>
+                    <input type="hidden" th:field="*{content}" id="contentInput">
+                    <div id="editor" th:utext="*{content}"></div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu Thay Đổi</button>
+                    <a href="/admin/content" class="btn btn-secondary">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script>
+    var quill = new Quill('#editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline'],
+                ['image', 'link'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }]
+            ]
+        }
+    });
+
+    document.getElementById('blogForm').onsubmit = function() {
+        var content = document.querySelector('input[name=content]');
+        content.value = quill.root.innerHTML;
+    };
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

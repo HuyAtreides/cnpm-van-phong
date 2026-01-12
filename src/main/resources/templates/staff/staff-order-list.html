@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản Lý Đơn Hàng | Nhân Viên</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar { height: 100vh; background: #2c3e50; color: white; position: fixed; width: 250px; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px 20px; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; color: white; }
+        .main-content { margin-left: 250px; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar d-flex flex-column p-3">
+    <h4 class="mb-4 text-center">Cổng Nhân Viên</h4>
+    <a href="/staff/dashboard"><i class="fas fa-home me-2"></i>Trang Chủ</a>
+    <a href="/staff/orders" class="active"><i class="fas fa-shopping-cart me-2"></i>Đơn Hàng</a>
+    <a href="/staff/blogs"><i class="fas fa-blog me-2"></i>Bài Viết</a>
+    <a href="/staff/support"><i class="fas fa-headset me-2"></i>Hỗ Trợ</a>
+    <hr>
+    <div class="mt-auto">
+        <a href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Đăng Xuất</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <h2 class="mb-4">Quản Lý Đơn Hàng</h2>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="order : ${orders}">
+                    <td th:text="${order.orderId}">#1</td>
+                    <td th:text="${order.customer != null ? order.customer.name : 'N/A'}">John Doe</td>
+                    <td th:text="${order.orderDate != null ? #dates.format(order.orderDate, 'dd/MM/yyyy') : 'N/A'}">01/01/2026</td>
+                    <td th:text="${order.totalCost != null ? #numbers.formatCurrency(order.totalCost) : '0'}">$100</td>
+                    <td>
+                        <span class="badge" 
+                              th:classappend="${order.status == 'Đang xử lý' ? 'text-bg-warning' : (order.status == 'Hoàn thành' ? 'text-bg-success' : 'text-bg-secondary')}"
+                              th:text="${order.status}">Pending</span>
+                    </td>
+                    <td>
+                        <a th:href="@{/staff/orders/{id}(id=${order.orderId})}" class="btn btn-sm btn-primary">View</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+

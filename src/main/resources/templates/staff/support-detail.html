@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi Tiết Yêu Cầu | Staff</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background-color: #f8f9fa; }
+        .sidebar { height: 100vh; background: #2c3e50; color: white; position: fixed; width: 250px; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px 20px; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; color: white; }
+        .main-content { margin-left: 250px; padding: 20px; }
+        
+        /* Chat styles */
+        .chat-box { height: 500px; overflow-y: auto; background: white; border: 1px solid #ddd; padding: 20px; border-radius: 5px; }
+        .message { margin-bottom: 20px; padding: 15px; border-radius: 15px; max-width: 80%; position: relative; }
+        
+        /* Customer messages (left) */
+        .message.customer { background: #f1f3f5; color: black; margin-right: auto; }
+        
+        /* Staff messages (right) */
+        .message.staff { background: #0d6efd; color: white; margin-left: auto; text-align: right; }
+        
+        .message-time { font-size: 0.75rem; opacity: 0.8; display: block; margin-top: 5px; }
+        .message-sender { font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar d-flex flex-column p-3">
+    <h4 class="mb-4 text-center">Cổng Nhân Viên</h4>
+    <a href="/staff/dashboard"><i class="fas fa-home me-2"></i>Tổng Quan</a>
+    <a href="/staff/orders"><i class="fas fa-shopping-cart me-2"></i>Đơn Hàng</a>
+    <a href="/staff/blogs"><i class="fas fa-blog me-2"></i>Bài Viết</a>
+    <a href="/staff/support" class="active"><i class="fas fa-headset me-2"></i>Hỗ Trợ</a>
+    <hr>
+    <div class="mt-auto">
+        <a href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Đăng Xuất</a>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="/staff/support" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Quay lại danh sách</a>
+        
+        <form th:action="@{/staff/support/close}" method="post" th:if="${conversation.status == 'Open'}">
+            <input type="hidden" name="conversationId" th:value="${conversation.conversationId}">
+            <button type="submit" class="btn btn-warning text-white" onclick="return confirm('Bạn có chắc muốn đóng yêu cầu này?')">
+                <i class="fas fa-check-circle me-2"></i>Đóng Yêu Cầu
+            </button>
+        </form>
+    </div>
+
+    <div th:if="${message}" class="alert alert-success alert-dismissible fade show">
+        <span th:text="${message}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="row">
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white fw-bold">Thông Tin Yêu Cầu</div>
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${conversation.title}">Tiêu đề</h5>
+                    <p class="card-text text-muted mb-4" th:text="'#' + ${conversation.conversationId}"></p>
+                    
+                    <h6 class="fw-bold mt-4">Khách hàng</h6>
+                    <p class="mb-1" th:text="${conversation.customer != null ? conversation.customer.name : 'N/A'}">Tên KH</p>
+                    <p class="mb-1 text-muted" th:text="${conversation.customer != null ? conversation.customer.email : 'N/A'}">Email</p>
+                    <p class="text-muted" th:text="${conversation.customer != null ? conversation.customer.phone : 'N/A'}">SDT</p>
+                    
+                    <h6 class="fw-bold mt-4">Trạng thái</h6>
+                    <span th:if="${conversation.status == 'Open'}" class="badge bg-success">Đang mở</span>
+                    <span th:if="${conversation.status == 'Closed'}" class="badge bg-secondary">Đã đóng</span>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <div class="chat-box mb-3 flex-grow-1">
+                        <div th:each="msg : ${messages}">
+                            
+                            <div th:class="'message ' + (${msg.sender.userId == conversation.customer.userId} ? 'customer' : 'staff')">
+                                <span class="message-sender" th:text="${msg.sender.userId == conversation.customer.userId ? 'Khách hàng' : 'Nhân viên'}">Sender</span>
+                                <div th:text="${msg.content}">Nội dung</div>
+                                <small class="message-time" th:text="${#dates.format(msg.timestamp, 'dd/MM/yyyy HH:mm')}">Time</small>
+                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(messages)}" class="text-center text-muted mt-5">
+                            Chưa có nội dung trao đổi.
+                        </div>
+                    </div>
+                    
+                    <form th:action="@{/staff/support/reply}" method="post" th:if="${conversation.status != 'Closed'}">
+                        <input type="hidden" name="conversationId" th:value="${conversation.conversationId}">
+                        <div class="input-group">
+                            <textarea name="content" class="form-control" rows="2" placeholder="Nhập câu trả lời..." required></textarea>
+                            <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane me-2"></i>Gửi</button>
+                        </div>
+                    </form>
+                    
+                     <div th:if="${conversation.status == 'Closed'}" class="alert alert-secondary text-center mb-0">
+                        Yêu cầu này đã đóng.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    var chatBox = document.querySelector('.chat-box');
+    if(chatBox) { chatBox.scrollTop = chatBox.scrollHeight; }
+</script>
+</body>
+</html>
+

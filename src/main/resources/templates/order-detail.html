@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiết Đơn Hàng - Ergoffice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <th:block th:replace="~{fragments/navigation :: user-menu-styles}"></th:block>
+    <style>
+        .page-header {
+            background-color: #f8f9fa;
+            padding: 40px 0;
+            margin-bottom: 40px;
+        }
+        .order-meta {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-processing { background: #e0f2fe; color: #0284c7; }
+        .status-completed { background: #dcfce7; color: #16a34a; }
+        .status-cancelled { background: #fee2e2; color: #dc2626; }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #1e293b;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        .info-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            height: 100%;
+        }
+
+        .order-table th {
+            font-weight: 600;
+            color: #64748b;
+            background-color: #f8f9fa;
+        }
+        .order-table td {
+            vertical-align: middle;
+        }
+        .product-name {
+            font-weight: 500;
+            color: #1e293b;
+        }
+        .price-col {
+            font-weight: 600;
+            color: #2563eb;
+        }
+        
+        .summary-row {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+
+<div class="page-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">Chi Tiết Đơn Hàng #<span th:text="${order.orderId}">123</span></h1>
+                <div class="order-meta">
+                    Ngày đặt: <span th:text="${#dates.format(order.orderDate, 'dd/MM/yyyy HH:mm')}">01/01/2026</span>
+                </div>
+            </div>
+            <div>
+                <span class="status-badge" 
+                      th:classappend="${order.status == 'Đang xử lý' ? 'status-processing' : (order.status == 'Hoàn thành' ? 'status-completed' : 'status-cancelled')}"
+                      th:text="${order.status}">
+                    Đang xử lý
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="info-card mb-4">
+                <h3 class="section-title">Danh Sách Sản Phẩm</h3>
+                <div class="table-responsive">
+                    <table class="table order-table">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-end">Đơn giá</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${order.orderItems}">
+                                <td>
+                                    <div class="product-name" th:text="${item.productType != null && item.productType.product != null ? item.productType.product.name : 'Unknown Product'}">Ghế Công Thái Học</div>
+                                    <small class="text-muted" th:if="${item.productType != null}" th:text="${item.productType.color} + ' - ' + ${item.productType.material}">Màu Đen</small>
+                                </td>
+                                <td class="text-center" th:text="${item.quantity}">1</td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">1.000.000 đ</td>
+                                <td class="text-end price-col" th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' đ'">1.000.000 đ</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Tổng tiền hàng:</strong></td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(order.totalCost, 0, 'COMMA', 0, 'POINT')} + ' đ'">1.000.000 đ</td>
+                            </tr>
+                            <tr class="summary-row text-primary">
+                                <td colspan="3" class="text-end">Tổng thanh toán:</td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(order.actualCost, 0, 'COMMA', 0, 'POINT')} + ' đ'">1.000.000 đ</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="/orders" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+                </a>
+                <a th:if="${order.status == 'Đã giao hàng' || order.status == 'Hoàn thành'}" 
+                   th:href="@{'/order/refund?orderId=' + ${order.orderId}}" 
+                   class="btn btn-danger">
+                   <i class="fas fa-undo me-2"></i>Yêu cầu Đổi/Trả
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="info-card mb-4">
+                <h3 class="section-title">Thông Tin Giao Hàng</h3>
+                <p class="mb-1"><strong>Người nhận:</strong> <span th:text="${order.customer.name}">Nguyễn Văn A</span></p>
+                <p class="mb-1"><strong>Số điện thoại:</strong> <span th:text="${order.phone}">0123456789</span></p>
+                <p class="mb-0"><strong>Địa chỉ:</strong></p>
+                <p class="text-muted" th:text="${order.streetNumber + ', ' + order.ward + ', ' + order.district + ', ' + order.cityOfProvince}">
+                    123 Đường ABC, Phường X, Quận Y, TP.HCM
+                </p>
+            </div>
+            
+            <div class="info-card">
+                <h3 class="section-title">Trạng Thái Đơn Hàng</h3>
+                <div class="timeline">
+                    <!-- Simple timeline visual or text -->
+                    <p class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Đơn hàng đã được đặt</p>
+                    <p class="mb-2" th:if="${order.status != 'Đang xử lý'}"><i class="fas fa-box text-primary me-2"></i>Đang đóng gói</p>
+                    <p class="mb-2" th:if="${order.status == 'Đang giao hàng' || order.status == 'Hoàn thành'}"><i class="fas fa-truck text-info me-2"></i>Đang giao hàng</p>
+                    <p class="mb-0" th:if="${order.status == 'Hoàn thành'}"><i class="fas fa-star text-warning me-2"></i>Giao hàng thành công</p>
+                    <p class="mb-0 text-danger" th:if="${order.status == 'Đã hủy'}"><i class="fas fa-times-circle me-2"></i>Đã hủy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/navigation :: footer}"></div>
+<div th:replace="~{fragments/navigation :: user-menu-scripts}"></div>
+
+</body>
+</html>

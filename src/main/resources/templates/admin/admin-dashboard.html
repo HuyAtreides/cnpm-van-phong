@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản Trị Hệ Thống | Ergoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar { height: 100vh; background: #2c3e50; color: white; position: fixed; width: 250px; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px 20px; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; color: white; }
+        .main-content { margin-left: 250px; padding: 20px; }
+        .card-stat { transition: transform 0.2s; }
+        .card-stat:hover { transform: translateY(-5px); }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{admin/fragments/sidebar :: sidebar(current='dashboard')}"></div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <h2 class="mb-4">Tổng Quan Quản Trị</h2>
+        
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card card-stat bg-primary text-white p-3">
+                    <h5>Doanh Thu</h5>
+                    <h2 th:text="${#numbers.formatCurrency(revenueStats['totalRevenue'])}">$0</h2>
+                </div>
+            </div>
+             <div class="col-md-3">
+                 <div class="card card-stat bg-success text-white p-3">
+                     <h5>Đơn Hoàn Thành</h5>
+                     <h2 th:text="${revenueStats['completedOrdersCount']}">0</h2>
+                 </div>
+             </div>
+            <div class="col-md-3">
+                <div class="card card-stat bg-info text-white p-3">
+                    <h5>Tổng Khách Hàng</h5>
+                    <h2 th:text="${adminStats['totalCustomers']}">0</h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-stat bg-warning text-dark p-3">
+                    <h5>Sản Phẩm Đang Bán</h5>
+                    <h2 th:text="${adminStats['activeProducts']}">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card card-stat bg-secondary text-white p-3">
+                    <h5>Tổng Nhân Viên</h5>
+                    <h2 th:text="${adminStats['totalUsers'] - adminStats['totalCustomers']}">0</h2> 
+                </div>
+            </div>
+            <div class="col-md-3">
+                 <div class="card card-stat bg-danger text-white p-3">
+                     <h5>Đơn Đã Hủy</h5>
+                     <h2 th:text="${adminStats['cancelledOrders']}">0</h2>
+                 </div>
+             </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">Hoạt Động Gần Đây</div>
+                    <div class="card-body">
+                        <p class="text-muted">Tính năng đang phát triển...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                 <div class="card">
+                     <div class="card-header">Phân Bổ Người Dùng</div>
+                     <div class="card-body">
+                         <ul class="list-group list-group-flush">
+                             <li class="list-group-item d-flex justify-content-between align-items-center">
+                                 Khách Hàng
+                                 <span class="badge bg-primary rounded-pill" th:text="${adminStats['totalCustomers']}">0</span>
+                             </li>
+                             <li class="list-group-item d-flex justify-content-between align-items-center">
+                                 Tổng User
+                                 <span class="badge bg-primary rounded-pill" th:text="${adminStats['totalUsers']}">0</span>
+                             </li>
+                         </ul>
+                     </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

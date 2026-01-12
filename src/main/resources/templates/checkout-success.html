@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt Hàng Thành Công - Ergoffice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <div th:replace="~{fragments/navigation :: user-menu-styles}"></div>
+    <style>
+        .success-page {
+            padding: 80px 0;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            display: block;
+        }
+        .btn-home {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 30px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+
+<div class="success-page">
+    <div class="container">
+        <span class="success-icon">🎉</span>
+        <h1>Đặt Hàng Thành Công!</h1>
+        <p>Cảm ơn bạn đã mua sắm tại Ergoffice. Chúng tôi sẽ liên hệ với bạn sớm để xác nhận đơn hàng.</p>
+        <a href="/" class="btn-home">Về Trang Chủ</a>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 Ergoffice. All rights reserved.</p>
+    </div>
+</footer>
+
+<div th:replace="~{fragments/navigation :: user-menu-scripts}"></div>
+
+</body>
+</html>
+

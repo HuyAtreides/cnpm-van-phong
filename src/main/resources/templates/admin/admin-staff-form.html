@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thêm Nhân Viên | Ergoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar { height: 100vh; background: #2c3e50; color: white; position: fixed; width: 250px; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px 20px; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; color: white; }
+        .main-content { margin-left: 250px; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{admin/fragments/sidebar :: sidebar(current='staff')}"></div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <h2 class="mb-4">Thêm Nhân Viên Mới</h2>
+
+        <div class="card" style="max-width: 800px;">
+            <div class="card-body">
+                <form th:action="@{/admin/staff/save}" th:object="${staff}" method="post">
+                    <input type="hidden" th:field="*{userId}" />
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Họ Tên</label>
+                            <input type="text" class="form-control" th:field="*{name}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" th:field="*{email}" th:readonly="${staff.userId != null}" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3" th:if="${staff.userId == null}">
+                        <div class="col-md-6">
+                            <label class="form-label">Mật Khẩu</label>
+                            <input type="password" class="form-control" th:field="*{password}" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Số Điện Thoại</label>
+                            <input type="text" class="form-control" th:field="*{phone}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Vị Trí</label>
+                            
+                            <select class="form-select" th:field="*{position}">
+                                <option value="Nhân Viên Bán Hàng">Nhân Viên Bán Hàng</option>
+                                <option value="Nhân Viên Kode">Nhân Viên Kho</option>
+                                <option value="Quản Lý">Quản Lý</option>
+                                <option value="Hỗ Trợ Kỹ Thuật">Hỗ Trợ Kỹ Thuật</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Địa Chỉ</label>
+                        <textarea class="form-control" th:field="*{address}" rows="2"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                         <label class="form-label">Giới Tính</label>
+                         <div class="d-flex gap-3">
+                             <div class="form-check">
+                                 <input class="form-check-input" type="radio" th:field="*{gender}" value="Nam">
+                                 <label class="form-check-label">Nam</label>
+                             </div>
+                             <div class="form-check">
+                                 <input class="form-check-input" type="radio" th:field="*{gender}" value="Nữ">
+                                 <label class="form-check-label">Nữ</label>
+                             </div>
+                         </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Lưu Nhân Viên</button>
+                        <a href="/admin/staff" class="btn btn-outline-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

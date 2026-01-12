@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản Lý Đánh Giá - Ergoffice Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar { height: 100vh; background: #2c3e50; color: white; position: fixed; width: 250px; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px 20px; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; color: white; }
+        .main-content { margin-left: 250px; padding: 20px; }
+        .star-rating { color: #ffc107; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{admin/fragments/sidebar :: sidebar(current='reviews')}"></div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <h2 class="mb-4">Danh Sách Đánh Giá Khách Hàng</h2>
+        
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px;">#ID</th>
+                            <th>Sản Phẩm</th>
+                            <th>Khách Hàng</th>
+                            <th style="width: 120px;">Đánh Giá</th>
+                            <th>Nội Dung</th>
+                            <th style="width: 150px;">Ngày</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="review : ${reviews}">
+                            <td th:text="${review.reviewId}" class="text-secondary fw-bold">1</td>
+                            <td>
+                                <div class="fw-medium" th:text="${review.product.name}">Product Name</div>
+                            </td>
+                            <td>
+                                <div th:text="${review.customer.name}">Customer Name</div>
+                                <small class="text-muted" th:text="${review.customer.phone}">Phone</small>
+                            </td>
+                            <td>
+                                <div class="star-rating">
+                                    <span th:each="i : ${#numbers.sequence(1, 5)}">
+                                        <i th:class="${i <= review.rating} ? 'fas fa-star' : 'far fa-star'"></i>
+                                    </span>
+                                </div>
+                            </td>
+                            <td th:text="${review.content}">Nội dung đánh giá...</td>
+                            <td th:text="${#dates.format(review.createAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(reviews)}">
+                            <td colspan="6" class="text-center py-4 text-muted">Chưa có đánh giá nào.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

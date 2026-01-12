@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sản phẩm - Ergoffice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <div th:replace="~{fragments/navigation :: user-menu-styles}"></div>
+</head>
+<body>
+
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+
+<div class="container">
+    <h2>Danh sách sản phẩm</h2>
+    
+    <div class="filters">
+        <form th:action="@{/products}" method="get">
+            <input type="text" name="keyword" th:value="${keyword}" placeholder="Tìm kiếm sản phẩm...">
+            <button type="submit">Tìm kiếm</button>
+        </form>
+        
+        <div class="category-filter">
+            <a th:href="@{/products}">Tất cả</a>
+            <a th:each="category : ${categories}" 
+               th:href="@{/products(categoryId=${category.categoryId})}"
+               th:classappend="${selectedCategory == category.categoryId} ? 'active' : ''"
+               th:text="${category.categoryName}">Category</a>
+        </div>
+    </div>
+
+    <div class="product-grid">
+        <div th:each="product : ${products}" class="product-card">
+            <a th:href="@{/product/{id}(id=${product.productId})}">
+                
+                <div class="product-image">
+                    <img th:if="${!#lists.isEmpty(product.productImages)}" 
+                         th:src="${#strings.startsWith(product.productImages[0].productImage, 'http') ? product.productImages[0].productImage : '/' + product.productImages[0].productImage}" 
+                         th:alt="${product.name}"
+                         style="width: 100%; height: 200px; object-fit: cover; border-radius: 10px 10px 0 0;">
+                    <div th:if="${#lists.isEmpty(product.productImages)}" 
+                         style="width: 100%; height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; border-radius: 10px 10px 0 0; color: white; font-size: 3rem;">
+                        🪑
+                    </div>
+                </div>
+                
+                <div style="padding: 1rem;">
+                    <h3 th:text="${product.name}">Product Name</h3>
+                    <p th:text="${product.descript}">Description</p>
+                    <div class="product-types">
+                        <span th:each="type : ${product.productTypes}" 
+                              th:text="${#numbers.formatDecimal(type.price, 0, 'COMMA', 0, 'POINT')} + ' VND'">Price</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(products)}" class="no-results">
+        <p>Không tìm thấy sản phẩm nào.</p>
+    </div>
+
+    
+    <div class="pagination-container" th:if="${totalPages > 1}" style="display: flex; justify-content: center; gap: 5px; margin-top: 2rem; flex-wrap: wrap;">
+        
+        <a th:if="${currentPage > 0}" 
+           th:href="@{/products(page=${currentPage - 1}, keyword=${keyword}, categoryId=${selectedCategory})}"
+           class="btn btn-outline-primary">&laquo;</a>
+
+        
+        <a th:if="${currentPage > 2}"
+           th:href="@{/products(page=0, keyword=${keyword}, categoryId=${selectedCategory})}"
+           class="btn btn-outline-primary">1</a>
+           
+        <span th:if="${currentPage > 3}" class="btn disabled">...</span>
+
+        
+        <th:block th:each="i : ${#numbers.sequence(currentPage > 2 ? currentPage - 2 : 0, currentPage + 2 < totalPages - 1 ? currentPage + 2 : totalPages - 1)}">
+            <a th:href="@{/products(page=${i}, keyword=${keyword}, categoryId=${selectedCategory})}"
+               th:text="${i + 1}"
+               class="btn"
+               th:classappend="${currentPage == i} ? 'btn-primary' : 'btn-outline-primary'"
+               style="min-width: 40px;">1</a>
+        </th:block>
+
+        <span th:if="${currentPage < totalPages - 4}" class="btn disabled">...</span>
+
+        
+        <a th:if="${currentPage < totalPages - 3}"
+           th:href="@{/products(page=${totalPages - 1}, keyword=${keyword}, categoryId=${selectedCategory})}"
+           th:text="${totalPages}"
+           class="btn btn-outline-primary">Last</a>
+
+        
+        <a th:if="${currentPage < totalPages - 1}"
+           th:href="@{/products(page=${currentPage + 1}, keyword=${keyword}, categoryId=${selectedCategory})}"
+           class="btn btn-outline-primary">&raquo;</a>
+    </div>
+</div>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 Ergoffice. All rights reserved.</p>
+    </div>
+</footer>
+
+<div th:replace="~{fragments/navigation :: user-menu-scripts}"></div>
+</body>
+</html>
+

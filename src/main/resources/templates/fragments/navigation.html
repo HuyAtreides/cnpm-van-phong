@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    
+    <header th:fragment="navigation">
+        <div class="container">
+            <h1>🪑 Ergoffice</h1>
+            <nav>
+                <a th:href="@{/}">Trang chủ</a>
+                <a th:href="@{/products}">Sản phẩm</a>
+                <a th:href="@{/blog}">Bài viết</a>
+                
+                
+                <a th:href="@{/cart}" class="cart-link" sec:authorize="isAuthenticated()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="9" cy="21" r="1"/>
+                        <circle cx="20" cy="21" r="1"/>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                    </svg>
+                    <span class="cart-badge" id="cartBadge">0</span>
+                </a>
+                
+                
+                <span sec:authorize="!isAuthenticated()">
+                    <a th:href="@{/register}" style="margin-right: 1rem;">Đăng ký</a>
+                    <a th:href="@{/login}">Đăng nhập</a>
+                </span>
+                
+                
+                <div class="user-menu" sec:authorize="isAuthenticated()">
+                    <div class="user-avatar" id="avatarBtn">
+                        <span sec:authentication="name" th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
+                    </div>
+                    <div class="dropdown-menu" id="userDropdown">
+                        <div class="user-info">
+                            <span sec:authentication="name">user@example.com</span>
+                        </div>
+                        <a th:href="@{/profile}">👤 Tài khoản</a>
+                        <a th:href="@{/wishlist}">❤️ Yêu thích</a>
+                        <a th:href="@{/support}">🧩 Hỗ trợ</a>
+                        <a th:href="@{/orders}">📦 Đơn hàng</a>
+                        <form th:action="@{/logout}" method="post" style="margin: 0;">
+                            <button type="submit">🚪 Đăng xuất</button>
+                        </form>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+    
+    
+    <th:block th:fragment="user-menu-styles">
+        <style>
+            .user-menu {
+                position: relative;
+                display: inline-block;
+            }
+            
+            .user-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                cursor: pointer;
+                font-size: 18px;
+                transition: transform 0.3s ease;
+            }
+            
+            .user-avatar:hover {
+                transform: scale(1.1);
+            }
+            
+            .dropdown-menu {
+                display: none;
+                position: absolute;
+                right: 0;
+                top: 50px;
+                background: white;
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                min-width: 200px;
+                z-index: 1000;
+                overflow: hidden;
+            }
+            
+            .dropdown-menu.show {
+                display: block;
+                animation: fadeIn 0.3s ease;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            .dropdown-menu a, .dropdown-menu button {
+                display: block;
+                padding: 12px 20px;
+                color: #333;
+                text-decoration: none;
+                transition: background 0.3s ease;
+                border: none;
+                background: none;
+                width: 100%;
+                text-align: left;
+                cursor: pointer;
+                font-size: 14px;
+            }
+            
+            .dropdown-menu a:hover, .dropdown-menu button:hover {
+                background: #f5f5f5;
+            }
+            
+            .user-info {
+                padding: 15px 20px;
+                border-bottom: 1px solid #eee;
+                font-weight: bold;
+                color: #667eea;
+            }
+            
+            /* Cart Icon */
+            .cart-link {
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+                padding: 0.5rem;
+                color: #333;
+                transition: color 0.3s ease;
+            }
+            
+            .cart-link:hover {
+                color: #667eea;
+            }
+            
+            .cart-badge {
+                position: absolute;
+                top: 0;
+                right: 0;
+                background: #ef4444;
+                color: white;
+                font-size: 11px;
+                font-weight: bold;
+                padding: 2px 6px;
+                border-radius: 10px;
+                min-width: 18px;
+                text-align: center;
+            }
+            
+            .cart-badge:empty {
+                display: none;
+            }
+        </style>
+    </th:block>
+    
+    
+    <script th:fragment="user-menu-scripts">
+        document.addEventListener('DOMContentLoaded', function() {
+            const avatarBtn = document.getElementById('avatarBtn');
+            const dropdown = document.getElementById('userDropdown');
+            
+            if (avatarBtn && dropdown) {
+                avatarBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('show');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!avatarBtn.contains(event.target) && !dropdown.contains(event.target)) {
+                        dropdown.classList.remove('show');
+                    }
+                });
+            }
+            
+            // Update cart badge
+            updateCartBadge();
+        });
+        
+        // Function to update cart badge
+        async function updateCartBadge() {
+            try {
+                const response = await fetch('/cart/count');
+                const data = await response.json();
+                const badge = document.getElementById('cartBadge');
+                if (badge && data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.style.display = 'block';
+                } else if (badge) {
+                    badge.textContent = '';
+                    badge.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error updating cart badge:', error);
+            }
+        }
+    </script>
+</body>
+</html>
+

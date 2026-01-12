@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ Cá Nhân | Ergoffice</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <div th:replace="~{fragments/navigation :: user-menu-styles}"></div>
+    <style>
+        .profile-card { border: none; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
+        .nav-pills .nav-link.active { background-color: #0d6efd; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card profile-card text-center p-4">
+                <div class="mb-3">
+                    <i class="fas fa-user-circle fa-5x text-secondary"></i>
+                </div>
+                <h4 th:text="${user.name}">User Name</h4>
+                <p class="text-muted" th:text="${user.email}">user@example.com</p>
+                <div class="d-grid gap-2">
+                    <a href="/orders" class="btn btn-outline-primary"><i class="fas fa-box me-2"></i>Đơn Hàng Của Tôi</a>
+                    <a href="/wishlist" class="btn btn-outline-danger"><i class="fas fa-heart me-2"></i>Sản Phẩm Yêu Thích</a>
+                    <a href="/support" class="btn btn-outline-success"><i class="fas fa-headset me-2"></i>Hỗ Trợ Khách Hàng</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div th:if="${param.success}" class="alert alert-success">Cập nhật thành công!</div>
+            <div th:if="${param.error}" class="alert alert-danger">Có lỗi xảy ra, vui lòng kiểm tra lại.</div>
+
+            <div class="card profile-card">
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#profile" role="tab">Thông tin cá nhân</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#addresses" role="tab">Sổ địa chỉ</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body tab-content">
+                    
+                    <div class="tab-pane fade show active" id="profile" role="tabpanel">
+                        <form th:action="@{/profile/update}" method="post">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Họ và tên</label>
+                                    <input type="text" class="form-control" name="name" th:value="${user.name}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" th:value="${user.email}" disabled>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Số điện thoại</label>
+                                    <input type="tel" class="form-control" name="phone" th:value="${user.phone}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Giới tính</label>
+                                    <select class="form-select" name="gender">
+                                        <option value="Male" th:selected="${user.gender == 'Male'}">Nam</option>
+                                        <option value="Female" th:selected="${user.gender == 'Female'}">Nữ</option>
+                                        <option value="Other" th:selected="${user.gender == 'Other'}">Khác</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Địa chỉ mặc định (Legacy)</label>
+                                <textarea class="form-control" name="address" rows="2" th:text="${user.address}"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Cập nhật thông tin</button>
+                        </form>
+                    </div>
+
+                    
+                    <div class="tab-pane fade" id="addresses" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Danh sách địa chỉ</h5>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                                <i class="fas fa-plus"></i> Thêm địa chỉ mới
+                            </button>
+                        </div>
+                        
+                        <div th:if="${addresses == null || addresses.empty}" class="alert alert-info">
+                            Bạn chưa lưu địa chỉ nào.
+                        </div>
+
+                        <div class="list-group">
+                            <div th:each="addr : ${addresses}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h6 class="mb-0" th:text="${addr.receiverName}">Nguyen Van A</h6>
+                                        <span th:if="${addr.default}" class="badge bg-success">Mặc định</span>
+                                    </div>
+                                    <small class="text-muted d-block" th:text="${addr.phone}">0901234567</small>
+                                    <p class="mb-0 mt-1" th:text="${addr.fullAddress}">123 Đường ABC...</p>
+                                </div>
+                                <div class="btn-group">
+                                    <form th:if="${!addr.default}" th:action="@{/profile/address/default}" method="post" class="d-inline">
+                                        <input type="hidden" name="addressId" th:value="${addr.addressId}">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Đặt làm mặc định"><i class="fas fa-check"></i></button>
+                                    </form>
+                                    <form th:action="@{/profile/address/delete}" method="post" class="d-inline" onsubmit="return confirm('Bạn chắc chắn muốn xóa?');">
+                                        <input type="hidden" name="addressId" th:value="${addr.addressId}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Thêm địa chỉ mới</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form th:action="@{/profile/address/add}" method="post">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Tên người nhận</label>
+                                    <input type="text" class="form-control" name="receiverName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Số điện thoại</label>
+                                    <input type="tel" class="form-control" name="phone" required>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Tỉnh/Thành</label>
+                                        <input type="text" class="form-control" name="city" required>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Quận/Huyện</label>
+                                        <input type="text" class="form-control" name="district" required>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Phường/Xã</label>
+                                        <input type="text" class="form-control" name="ward" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Địa chỉ chi tiết</label>
+                                    <input type="text" class="form-control" name="specificAddress" required placeholder="Số nhà, tên đường...">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-primary">Lưu địa chỉ</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<div th:replace="~{fragments/navigation :: user-menu-scripts}"></div>
+</body>
+</html>
+
