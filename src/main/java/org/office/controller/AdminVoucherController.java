@@ -1,9 +1,7 @@
 package org.office.controller;
 
 import org.office.model.Voucher;
-import org.office.model.VoucherByPrice;
-import org.office.repository.VoucherRepository;
-import org.office.repository.VoucherByPriceRepository;
+import org.office.service.AdminVoucherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
@@ -19,14 +17,11 @@ import java.util.List;
 public class AdminVoucherController {
 
     @Autowired
-    private VoucherRepository voucherRepository;
-
-    @Autowired
-    private VoucherByPriceRepository voucherByPriceRepository;
+    private AdminVoucherService adminVoucherService;
 
     @GetMapping
     public String listVouchers(Model model) {
-        List<Voucher> vouchers = voucherRepository.findAll();
+        List<Voucher> vouchers = adminVoucherService.getAllVouchers();
         model.addAttribute("vouchers", vouchers);
         return "admin/vouchers";
     }
@@ -42,30 +37,7 @@ public class AdminVoucherController {
             RedirectAttributes redirectAttributes) {
         
         try {
-            // Basic validation
-            if (voucherRepository.findByCode(code).isPresent()) {
-                redirectAttributes.addFlashAttribute("error", "Mã voucher đã tồn tại");
-                return "redirect:/admin/vouchers";
-            }
-
-            VoucherByPrice voucher = new VoucherByPrice();
-            voucher.setCode(code.toUpperCase());
-            voucher.setDateStart(dateStart);
-            voucher.setDateEnd(dateEnd);
-            voucher.setIsDelete(0);
-            
-            // Subclass fields
-            voucher.setMinOrderValue(minOrderValue);
-            voucher.setDiscountPercent(discountPercent);
-            voucher.setMaxDiscount(maxDiscount);
-            
-            // Base discount field (used for display or simple logic if needed, but logic uses subclass fields)
-            // But VoucherService uses subclass fields.
-            // We can set base discount to null or usage specific.
-            voucher.setDiscount(discountPercent); // Store percent or generic value
-            
-            voucherByPriceRepository.save(voucher);
-            
+            adminVoucherService.addVoucher(code, dateStart, dateEnd, minOrderValue, discountPercent, maxDiscount);
             redirectAttributes.addFlashAttribute("success", "Thêm voucher thành công");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
@@ -77,12 +49,8 @@ public class AdminVoucherController {
     @PostMapping("/delete/{id}")
     public String deleteVoucher(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
         try {
-            Voucher voucher = voucherRepository.findById(id).orElse(null);
-            if (voucher != null) {
-                voucher.setIsDelete(1); // Soft delete
-                voucherRepository.save(voucher);
-                redirectAttributes.addFlashAttribute("success", "Xóa voucher thành công");
-            }
+            adminVoucherService.deleteVoucher(id);
+            redirectAttributes.addFlashAttribute("success", "Xóa voucher thành công");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
@@ -92,7 +60,7 @@ public class AdminVoucherController {
     @GetMapping("/{id}")
     @ResponseBody
     public Voucher getVoucher(@PathVariable Integer id) {
-        return voucherRepository.findById(id).orElse(null);
+        return adminVoucherService.getVoucherById(id).orElse(null);
     }
 
     @PostMapping("/update")
@@ -107,22 +75,8 @@ public class AdminVoucherController {
             RedirectAttributes redirectAttributes) {
         
         try {
-            Voucher voucher = voucherRepository.findById(voucherId).orElse(null);
-            if (voucher instanceof VoucherByPrice) {
-                VoucherByPrice v = (VoucherByPrice) voucher;
-                // v.setCode(code); // Code usually shouldn't change, or check duplicates if changed
-                v.setDateStart(dateStart);
-                v.setDateEnd(dateEnd);
-                v.setMinOrderValue(minOrderValue);
-                v.setDiscountPercent(discountPercent);
-                v.setMaxDiscount(maxDiscount);
-                v.setDiscount(discountPercent); // Sync base field
-                
-                voucherByPriceRepository.save(v);
-                redirectAttributes.addFlashAttribute("success", "Cập nhật voucher thành công");
-            } else {
-                redirectAttributes.addFlashAttribute("error", "Loại voucher không hỗ trợ sửa (hoặc không tìm thấy)");
-            }
+            adminVoucherService.updateVoucher(voucherId, code, dateStart, dateEnd, minOrderValue, discountPercent, maxDiscount);
+            redirectAttributes.addFlashAttribute("success", "Cập nhật voucher thành công");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
         }
@@ -130,3 +84,4 @@ public class AdminVoucherController {
         return "redirect:/admin/vouchers";
     }
 }
+

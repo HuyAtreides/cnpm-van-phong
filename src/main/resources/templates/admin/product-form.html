@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${product.productId != null} ? 'Chỉnh sửa sản phẩm' : 'Tạo sản phẩm mới'">Sản phẩm - Ergoffice Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar { height: 100vh; background: #2c3e50; color: white; position: fixed; width: 250px; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px 20px; }
+        .sidebar a:hover, .sidebar a.active { background: #34495e; color: white; }
+        .main-content { margin-left: 250px; padding: 20px; }
+        .form-section { background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{admin/fragments/sidebar :: sidebar(current='products')}"></div>
+
+<div class="main-content">
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2 th:text="${product.productId != null} ? 'Chỉnh sửa sản phẩm' : 'Tạo sản phẩm mới'">
+                    Sản phẩm
+                </h2>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="/admin/products" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Quay lại
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form th:action="${product.productId != null} ? @{/admin/products/{id}/edit(id=${product.productId})} : @{/admin/products/create}" 
+                      method="post">
+
+                    <div class="form-section">
+                        <h5 class="mb-3">Thông tin cơ bản</h5>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   th:value="${product.name}" required>
+                            <small class="text-muted">Tên sản phẩm không được để trống</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Danh mục <span class="text-danger">*</span></label>
+                            <select class="form-select" id="category" name="category.categoryId" required>
+                                <option value="">-- Chọn danh mục --</option>
+                                <option th:each="cat : ${categories}" 
+                                        th:value="${cat.categoryId}"
+                                        th:text="${cat.categoryName}"
+                                        th:selected="${product.category != null && product.category.categoryId == cat.categoryId}">
+                                    Category
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h5 class="mb-3">Mô tả</h5>
+                        
+                        <div class="mb-3">
+                            <label for="descript" class="form-label">Mô tả sản phẩm</label>
+                            <textarea class="form-control" id="descript" name="descript" rows="6" 
+                                      th:text="${product.descript}"></textarea>
+                            <small class="text-muted">Mô tả chi tiết về sản phẩm</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i th:class="${product.productId != null} ? 'fas fa-save me-1' : 'fas fa-plus me-1'"></i>
+                            <span th:text="${product.productId != null} ? 'Cập nhật' : 'Tạo mới'">Lưu</span>
+                        </button>
+                        <a href="/admin/products" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> Hủy
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

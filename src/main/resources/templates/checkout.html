@@ -287,12 +287,10 @@
     async function applyVoucher(code) {
         document.getElementById('voucherCode').value = code;
         
-        // Close modal
         const modalEl = document.getElementById('voucherModal');
         const modalInstance = bootstrap.Modal.getInstance(modalEl);
         modalInstance.hide();
         
-        // Calculate discount via API
         await validateAndApplyVoucher(code);
     }
     
@@ -303,34 +301,40 @@
             return;
         }
         
-        // Get subtotal from data attribute
         const subtotalElement = document.getElementById('subtotalDisplay');
         const subtotal = subtotalElement ? parseFloat(subtotalElement.getAttribute('data-value')) : 0;
         
         if (subtotal === 0) {
             showVoucherError('Không thể tính toán giá trị đơn hàng');
+            document.getElementById('voucherCode').value = '';
             return;
         }
-        
+
         try {
             const response = await fetch('/api/vouchers/validate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ voucherCode: code, subtotal: subtotal })
             });
-            
+
             const result = await response.json();
-            
+
             if (result.valid) {
                 updatePriceBreakdown(subtotal, result.discount, result.finalTotal);
             } else {
                 showVoucherError(result.error);
                 resetPriceBreakdown();
+                // Clear the input field when error
+                document.getElementById('voucherCode').value = '';
+                // Show error popup
+                showVoucherErrorModal(result.error);
             }
         } catch (error) {
             console.error('Error validating voucher:', error);
             showVoucherError('Lỗi khi kiểm tra voucher');
             resetPriceBreakdown();
+            document.getElementById('voucherCode').value = '';
+            showVoucherErrorModal('Lỗi khi kiểm tra voucher');
         }
     }
     
@@ -379,11 +383,13 @@
         const errorRow = document.querySelector('.voucher-error-row');
         if (errorRow) errorRow.style.display = 'none';
         
-        // Reset to subtotal
-        const subtotalText = document.querySelector('.summary-item:first-of-type span:last-child')?.textContent;
+        // Reset to subtotal using the data attribute
+        const subtotalElement = document.getElementById('subtotalDisplay');
+        const subtotal = subtotalElement ? parseFloat(subtotalElement.getAttribute('data-value')) : 0;
         const totalSpan = document.querySelector('.summary-item.total-row span:last-child');
-        if (totalSpan && subtotalText) {
-            totalSpan.textContent = subtotalText;
+        
+        if (totalSpan && subtotal > 0) {
+            totalSpan.textContent = new Intl.NumberFormat('vi-VN').format(subtotal) + ' VNĐ';
         }
     }
     
@@ -402,6 +408,30 @@
         
         errorRow.innerHTML = `<i class="fas fa-exclamation-circle me-1"></i> ${message}`;
         errorRow.style.display = 'flex';
+    }
+    
+    function showVoucherErrorModal(message) {
+        // Create and show a simple alert-style modal
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.style.position = 'fixed';
+        alertDiv.style.top = '20px';
+        alertDiv.style.right = '20px';
+        alertDiv.style.zIndex = '9999';
+        alertDiv.style.minWidth = '300px';
+        alertDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        alertDiv.innerHTML = `
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Lỗi:</strong> ${message}
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
     }
     
     // Listen to voucher input changes

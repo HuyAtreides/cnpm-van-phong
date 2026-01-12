@@ -6,6 +6,7 @@ import org.office.model.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Integer> {
@@ -30,5 +31,11 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
            "GROUP BY pt.product.name " +
            "ORDER BY SUM(oi.quantity) DESC")
     List<TopProductDto> findTopSellingProducts(org.springframework.data.domain.Pageable pageable);
+    
+    @org.springframework.data.jpa.repository.Query("SELECT o.status, COUNT(o) FROM Order o GROUP BY o.status")
+    List<Object[]> countByStatus();
+    
+    @org.springframework.data.jpa.repository.Query("SELECT MONTH(o.orderDate), YEAR(o.orderDate), SUM(o.actualCost) FROM Order o WHERE o.status = 'Hoàn thành' GROUP BY MONTH(o.orderDate), YEAR(o.orderDate) ORDER BY YEAR(o.orderDate), MONTH(o.orderDate)")
+    List<Object[]> getMonthlyRevenue();
 }
 
