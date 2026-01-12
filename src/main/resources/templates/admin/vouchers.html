@@ -52,7 +52,7 @@
                             </td>
                             <td>
                                 <!-- Need to cast or check if it is VoucherByPrice to show MinValue -->
-                                <span th:if="${v instanceof T(org.example.vanphong.model.VoucherByPrice)}"
+                                <span th:if="${v instanceof T(org.office.model.VoucherByPrice)}"
                                       th:text="${#numbers.formatDecimal(v.minOrderValue, 0, 'COMMA', 0, 'POINT')} + ' đ'">
                                 </span>
                             </td>
