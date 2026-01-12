@@ -54,15 +54,11 @@ public class AdminVoucherController {
             voucher.setDateEnd(dateEnd);
             voucher.setIsDelete(0);
             
-            // Subclass fields
             voucher.setMinOrderValue(minOrderValue);
             voucher.setDiscountPercent(discountPercent);
             voucher.setMaxDiscount(maxDiscount);
             
-            // Base discount field (used for display or simple logic if needed, but logic uses subclass fields)
-            // But VoucherService uses subclass fields.
-            // We can set base discount to null or usage specific.
-            voucher.setDiscount(discountPercent); // Store percent or generic value
+            voucher.setDiscount(discountPercent);
             
             voucherByPriceRepository.save(voucher);
             
@@ -79,7 +75,7 @@ public class AdminVoucherController {
         try {
             Voucher voucher = voucherRepository.findById(id).orElse(null);
             if (voucher != null) {
-                voucher.setIsDelete(1); // Soft delete
+                voucher.setIsDelete(1);
                 voucherRepository.save(voucher);
                 redirectAttributes.addFlashAttribute("success", "Xóa voucher thành công");
             }

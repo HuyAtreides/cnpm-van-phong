@@ -287,12 +287,10 @@
     async function applyVoucher(code) {
         document.getElementById('voucherCode').value = code;
         
-        // Close modal
         const modalEl = document.getElementById('voucherModal');
         const modalInstance = bootstrap.Modal.getInstance(modalEl);
         modalInstance.hide();
         
-        // Calculate discount via API
         await validateAndApplyVoucher(code);
     }
     
@@ -303,7 +301,6 @@
             return;
         }
         
-        // Get subtotal from data attribute
         const subtotalElement = document.getElementById('subtotalDisplay');
         const subtotal = subtotalElement ? parseFloat(subtotalElement.getAttribute('data-value')) : 0;
         
@@ -311,16 +308,16 @@
             showVoucherError('Không thể tính toán giá trị đơn hàng');
             return;
         }
-        
+
         try {
             const response = await fetch('/api/vouchers/validate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ voucherCode: code, subtotal: subtotal })
             });
-            
+
             const result = await response.json();
-            
+
             if (result.valid) {
                 updatePriceBreakdown(subtotal, result.discount, result.finalTotal);
             } else {
