@@ -3,7 +3,11 @@ package org.office.service;
 import org.office.model.Blog;
 import org.office.repository.BlogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +17,35 @@ public class BlogService {
     @Autowired
     private BlogRepository blogRepository;
 
+    public Page<Blog> searchApprovedBlogs(
+            String title,
+            Date postingDate,
+            Pageable pageable
+    ) {
+        // chỉ blog đã duyệt
+        Integer approval = 1;
+
+        if ((title == null || title.isBlank()) && postingDate == null) {
+            return blogRepository.findByApproval(approval, pageable);
+        }
+
+        if (title != null && !title.isBlank() && postingDate != null) {
+            return blogRepository
+                    .findByApprovalAndBlogTitleContainingIgnoreCaseAndPostingDate(
+                            approval, title, postingDate, pageable
+                    );
+        }
+
+        if (title != null && !title.isBlank()) {
+            return blogRepository
+                    .findByApprovalAndBlogTitleContainingIgnoreCase(
+                            approval, title, pageable
+                    );
+        }
+
+        return blogRepository
+                .findByApprovalAndPostingDate(approval, postingDate, pageable);
+    }
     
     public List<Blog> getApprovedBlogs() {
         return blogRepository.findByApproval(1);

@@ -1,5 +1,6 @@
 package org.office.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.office.model.User;
 import org.office.service.UserService;
 import org.office.service.WishlistService;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/wishlist")
@@ -46,7 +48,7 @@ public class WishlistController {
     }
 
     @PostMapping("/add")
-    public String addToWishlist(Authentication authentication, @RequestParam Integer productId, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+    public String addToWishlist(Authentication authentication, @RequestParam Integer productId, RedirectAttributes redirectAttributes, HttpServletRequest request) {
         try {
             if (authentication == null) return "redirect:/login";
 
@@ -64,11 +66,14 @@ public class WishlistController {
             e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "Lỗi hệ thống: " + e.getMessage());
         }
-        return "redirect:/wishlist";
+
+        String referer = request.getHeader("Referer");
+        return "redirect:" + (referer != null ? referer : "/wishlist");
+//        return "redirect:/wishlist";
     }
 
     @PostMapping("/remove")
-    public String removeFromWishlist(Authentication authentication, @RequestParam Integer productId) {
+    public String removeFromWishlist(Authentication authentication, @RequestParam Integer productId, HttpServletRequest request) {
         if (authentication == null) return "redirect:/login";
 
         String email = authentication.getName();
@@ -76,7 +81,10 @@ public class WishlistController {
         if (user != null) {
             wishlistService.removeFromWishlist(user.getUserId(), productId);
         }
-        return "redirect:/wishlist";
+
+        String referer = request.getHeader("Referer");
+        return "redirect:" + (referer != null ? referer : "/wishlist");
+//        return "redirect:/wishlist";
     }
 }
 

@@ -10,6 +10,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <div th:replace="~{fragments/navigation :: user-menu-styles}"></div>
+    <style>
+        .wishlist-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            background: white;
+            border-radius: 50%;
+            padding: 6px 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .wishlist-btn:hover {
+            transform: scale(1.1);
+        }
+        .product-card {
+            position: relative;
+        }
+    </style>
 </head>
 <body>
 
@@ -35,6 +56,31 @@
 
     <div class="product-grid">
         <div th:each="product : ${products}" class="product-card">
+            <a sec:authorize="isAnonymous()"
+               th:href="@{/login}"
+               class="wishlist-btn">
+                🤍
+            </a>
+
+            <!-- ❤️ / 🤍 WISHLIST -->
+            <div sec:authorize="isAuthenticated()">
+                <!-- ĐÃ YÊU THÍCH -->
+                <form th:if="${wishlistProductIds != null
+                      and wishlistProductIds.contains(product.productId)}"
+                      th:action="@{/wishlist/remove}" method="post">
+                    <input type="hidden" name="productId" th:value="${product.productId}">
+                    <button type="submit" class="wishlist-btn" title="Bỏ yêu thích">❤️</button>
+                </form>
+
+                <!-- CHƯA YÊU THÍCH -->
+                <form th:unless="${wishlistProductIds != null
+                          and wishlistProductIds.contains(product.productId)}"
+                      th:action="@{/wishlist/add}" method="post">
+                    <input type="hidden" name="productId" th:value="${product.productId}">
+                    <button type="submit" class="wishlist-btn" title="Thêm yêu thích">🤍</button>
+                </form>
+            </div>
+
             <a th:href="@{/product/{id}(id=${product.productId})}">
                 
                 <div class="product-image">
