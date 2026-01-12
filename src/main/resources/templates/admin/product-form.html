@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" 
+<html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -21,11 +21,10 @@
 
 <div class="main-content">
     <div class="container-fluid">
+        <!-- Header -->
         <div class="row mb-4">
             <div class="col-md-8">
-                <h2 th:text="${product.productId != null} ? 'Chỉnh sửa sản phẩm' : 'Tạo sản phẩm mới'">
-                    Sản phẩm
-                </h2>
+                <h2 th:text="${product.productId != null} ? 'Chỉnh sửa sản phẩm' : 'Tạo sản phẩm mới'">Sản phẩm</h2>
             </div>
             <div class="col-md-4 text-end">
                 <a href="/admin/products" class="btn btn-secondary">
@@ -34,23 +33,26 @@
             </div>
         </div>
 
+        <!-- Error message -->
         <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="fas fa-exclamation-circle me-2"></i>
             <span th:text="${error}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
+        <!-- Form card -->
         <div class="card">
             <div class="card-body">
-                <form th:action="${product.productId != null} ? @{/admin/products/{id}/edit(id=${product.productId})} : @{/admin/products/create}" 
+                <form th:action="${product.productId != null} ? @{/admin/products/{id}/edit(id=${product.productId})} : @{/admin/products/create}"
                       method="post">
 
+                    <!-- Thông tin cơ bản -->
                     <div class="form-section">
                         <h5 class="mb-3">Thông tin cơ bản</h5>
-                        
+
                         <div class="mb-3">
                             <label for="name" class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="name" name="name" 
+                            <input type="text" class="form-control" id="name" name="name"
                                    th:value="${product.name}" required>
                             <small class="text-muted">Tên sản phẩm không được để trống</small>
                         </div>
@@ -59,27 +61,52 @@
                             <label for="category" class="form-label">Danh mục <span class="text-danger">*</span></label>
                             <select class="form-select" id="category" name="category.categoryId" required>
                                 <option value="">-- Chọn danh mục --</option>
-                                <option th:each="cat : ${categories}" 
+                                <option th:each="cat : ${categories}"
                                         th:value="${cat.categoryId}"
                                         th:text="${cat.categoryName}"
                                         th:selected="${product.category != null && product.category.categoryId == cat.categoryId}">
-                                    Category
                                 </option>
                             </select>
                         </div>
                     </div>
 
+                    <!-- Mô tả -->
                     <div class="form-section">
                         <h5 class="mb-3">Mô tả</h5>
-                        
                         <div class="mb-3">
                             <label for="descript" class="form-label">Mô tả sản phẩm</label>
-                            <textarea class="form-control" id="descript" name="descript" rows="6" 
+                            <textarea class="form-control" id="descript" name="descript" rows="6"
                                       th:text="${product.descript}"></textarea>
                             <small class="text-muted">Mô tả chi tiết về sản phẩm</small>
                         </div>
                     </div>
 
+                    <!-- ProductType -->
+                    <div class="form-section">
+                        <h5 class="mb-3">Chi tiết loại sản phẩm</h5>
+                        <div id="productTypesContainer">
+                            <!-- Nếu đang edit -->
+                            <div th:each="pt : ${product.productTypes}" class="productTypeRow mb-2 d-flex gap-2 align-items-center">
+                                <input type="text" class="form-control" name="color" placeholder="Màu" th:value="${pt.color}" required>
+                                <input type="text" class="form-control" name="material" placeholder="Chất liệu" th:value="${pt.material}" required>
+                                <input type="number" class="form-control" name="price" placeholder="Giá" step="0.01" min="0" th:value="${pt.price}" required>
+                                <input type="number" class="form-control" name="quantity" placeholder="Số lượng" min="0" th:value="${pt.quantity}" required>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Xóa</button>
+                            </div>
+
+                            <!-- Nếu tạo mới -->
+                            <div th:if="${product.productId == null}" class="productTypeRow mb-2 d-flex gap-2 align-items-center">
+                                <input type="text" class="form-control" name="color" placeholder="Màu" required>
+                                <input type="text" class="form-control" name="material" placeholder="Chất liệu" required>
+                                <input type="number" class="form-control" name="price" placeholder="Giá" step="0.01" min="0" required>
+                                <input type="number" class="form-control" name="quantity" placeholder="Số lượng" min="0" required>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Xóa</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="addRow()">Thêm loại sản phẩm</button>
+                    </div>
+
+                    <!-- Buttons -->
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i th:class="${product.productId != null} ? 'fas fa-save me-1' : 'fas fa-plus me-1'"></i>
@@ -89,11 +116,34 @@
                             <i class="fas fa-times me-1"></i> Hủy
                         </a>
                     </div>
+
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<!-- JS thêm/xóa ProductType -->
+<script>
+    function addRow() {
+        const container = document.getElementById('productTypesContainer');
+        const newRow = document.createElement('div');
+        newRow.classList.add('productTypeRow', 'mb-2', 'd-flex', 'gap-2', 'align-items-center');
+        newRow.innerHTML = `
+            <input type="text" class="form-control" name="color" placeholder="Màu" required>
+            <input type="text" class="form-control" name="material" placeholder="Chất liệu" required>
+            <input type="number" class="form-control" name="price" placeholder="Giá" step="0.01" min="0" required>
+            <input type="number" class="form-control" name="quantity" placeholder="Số lượng" min="0" required>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">Xóa</button>
+        `;
+        container.appendChild(newRow);
+    }
+
+    function removeRow(button) {
+        const row = button.parentElement;
+        row.remove();
+    }
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

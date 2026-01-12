@@ -3,10 +3,12 @@ package org.office.controller;
 import org.office.model.Product;
 import org.office.model.ProductImage;
 import org.office.model.Category;
+import org.office.model.ProductType;
 import org.office.service.ProductService;
 import org.office.service.FileUploadService;
 import org.office.repository.ProductImageRepository;
 import org.office.repository.CategoryRepository;
+import org.office.repository.ProductTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
 import java.util.Optional;
 
 @Controller
@@ -33,10 +36,13 @@ public class AdminProductController {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private ProductTypeRepository productTypeRepository;
+
     @GetMapping
     public String listProducts(@RequestParam(defaultValue = "0") int page,
-                             @RequestParam(defaultValue = "10") int size,
-                             Model model) {
+                               @RequestParam(defaultValue = "10") int size,
+                               Model model) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Product> productPage = productService.getAllActiveProducts(pageable);
         model.addAttribute("products", productPage.getContent());
@@ -54,7 +60,15 @@ public class AdminProductController {
     }
 
     @PostMapping("/create")
-    public String createProduct(@ModelAttribute Product product, Model model) {
+
+    public String createProduct(
+            @ModelAttribute Product product,
+            @RequestParam("color") String[] colors,
+            @RequestParam("material") String[] materials,
+            @RequestParam("price") Double[] prices,
+            @RequestParam("quantity") Integer[] quantities,
+            Model model) {
+
         try {
             if (product.getName() == null || product.getName().trim().isEmpty()) {
                 model.addAttribute("error", "Tên sản phẩm không được để trống");
@@ -62,9 +76,35 @@ public class AdminProductController {
                 model.addAttribute("categories", categoryRepository.findAll());
                 return "admin/product-form";
             }
+
             product.setIsDelete(0);
-            productService.saveProduct(product);
+            Product savedProduct = productService.saveProduct(product);
+
+            int n = colors.length;
+            for (int i = 0; i < n; i++) {
+                String color = colors[i];
+                String material = materials[i];
+                Double price = prices[i];
+                Integer quantity = quantities[i];
+
+                if ((color != null && !color.trim().isEmpty()) &&
+                        (material != null && !material.trim().isEmpty()) &&
+                        price != null && price > 0 &&
+                        quantity != null && quantity > 0) {
+
+                    ProductType pt = new ProductType();
+                    pt.setProduct(savedProduct);
+                    pt.setColor(color);
+                    pt.setMaterial(material);
+                    pt.setPrice(price);
+                    pt.setQuantity(quantity);
+
+                    productTypeRepository.save(pt);
+                }
+            }
+
             return "redirect:/admin/products?success";
+
         } catch (Exception e) {
             model.addAttribute("error", "Tạo sản phẩm thất bại: " + e.getMessage());
             model.addAttribute("product", product);
@@ -72,7 +112,6 @@ public class AdminProductController {
             return "admin/product-form";
         }
     }
-
     @GetMapping("/{id}/edit")
     public String showEditForm(@PathVariable Integer id, Model model) {
         Optional<Product> product = productService.getProductById(id);
@@ -85,9 +124,9 @@ public class AdminProductController {
     }
 
     @PostMapping("/{id}/edit")
-    public String updateProduct(@PathVariable Integer id, 
-                               @ModelAttribute Product updatedProduct,
-                               Model model) {
+    public String updateProduct(@PathVariable Integer id,
+                                @ModelAttribute Product updatedProduct,
+                                Model model) {
         try {
             Optional<Product> existingProduct = productService.getProductById(id);
             if (existingProduct.isEmpty()) {
@@ -128,23 +167,23 @@ public class AdminProductController {
     @GetMapping("/{id}/images")
     public String manageImages(@PathVariable Integer id, Model model) {
         Product product = productService.getProductById(id)
-            .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new RuntimeException("Product not found"));
         model.addAttribute("product", product);
         return "admin/product-images";
     }
 
     @PostMapping("/{id}/images/upload")
-    public String uploadImage(@PathVariable Integer id, 
-                             @RequestParam("file") MultipartFile file,
-                             Model model) {
+    public String uploadImage(@PathVariable Integer id,
+                              @RequestParam("file") MultipartFile file,
+                              Model model) {
         try {
             Product product = productService.getProductById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                    .orElseThrow(() -> new RuntimeException("Product not found"));
 
-            
+
             String filePath = fileUploadService.uploadFile(file);
 
-            
+
             ProductImage productImage = new ProductImage();
             productImage.setProduct(product);
             productImage.setProductImage(filePath);
@@ -158,18 +197,18 @@ public class AdminProductController {
     }
 
     @PostMapping("/images/{imageId}/delete")
-    public String deleteImage(@PathVariable Integer imageId, 
-                             @RequestParam Integer productId) {
+    public String deleteImage(@PathVariable Integer imageId,
+                              @RequestParam Integer productId) {
         try {
             ProductImage image = productImageRepository.findById(imageId)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
-            
-            
+                    .orElseThrow(() -> new RuntimeException("Image not found"));
+
+
             fileUploadService.deleteFile(image.getProductImage());
-            
-            
+
+
             productImageRepository.delete(image);
-            
+
             return "redirect:/admin/products/" + productId + "/images?deleted";
         } catch (Exception e) {
             return "redirect:/admin/products/" + productId + "/images?error";
