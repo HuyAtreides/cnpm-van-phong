@@ -1,12 +1,14 @@
 package org.office.controller;
 
 import org.office.model.Blog;
-import org.office.repository.BlogRepository;
+import org.office.service.BlogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
 
 @Controller
 @RequestMapping("/admin/content")
@@ -14,54 +16,54 @@ import org.springframework.web.bind.annotation.*;
 public class AdminContentController {
 
     @Autowired
-    private BlogRepository blogRepository;
+    private BlogService blogService;
 
+    // Hiển thị tất cả blog
     @GetMapping
     public String listContent(Model model) {
-        model.addAttribute("blogs", blogRepository.findAll());
-        
+        model.addAttribute("blogs", blogService.getAllBlogs());
         return "admin/content/list";
     }
 
+    // Form chỉnh sửa blog
     @GetMapping("/blogs/{id}/edit")
     public String editBlog(@PathVariable Integer id, Model model) {
-        Blog blog = blogRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Blog not found"));
+        Blog blog = blogService.getBlogById(id)
+                .orElseThrow(() -> new RuntimeException("Blog not found"));
         model.addAttribute("blog", blog);
         return "admin/content/form";
     }
 
+    // Lưu blog (cập nhật)
     @PostMapping("/blogs/save")
     public String saveBlog(@ModelAttribute Blog blog) {
         if (blog.getBlogId() != null) {
-            Blog existing = blogRepository.findById(blog.getBlogId())
-                .orElseThrow(() -> new RuntimeException("Blog not found"));
-            existing.setBlogTitle(blog.getBlogTitle());
-            existing.setContent(blog.getContent());
-            
-            existing.setApproval(1); 
-            
-            if (existing.getPostingDate() == null) {
-                existing.setPostingDate(new java.util.Date());
+            // Cập nhật blog hiện có
+            Blog updatedBlog = blogService.updateBlog(blog.getBlogId(), blog);
+
+            // Đảm bảo blog được approve
+            if (updatedBlog.getApproval() == null || updatedBlog.getApproval() != 1) {
+                updatedBlog.setApproval(1);
+                if (updatedBlog.getPostingDate() == null) {
+                    updatedBlog.setPostingDate(new Date());
+                }
+                blogService.updateBlog(updatedBlog.getBlogId(), updatedBlog);
             }
-            blogRepository.save(existing);
         }
         return "redirect:/admin/content";
     }
 
+    // Approve blog
     @GetMapping("/blogs/{id}/approve")
     public String approveBlog(@PathVariable Integer id) {
-        Blog blog = blogRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Blog not found"));
-        blog.setApproval(1);
-        blogRepository.save(blog);
+        blogService.approveBlog(id);
         return "redirect:/admin/content";
     }
 
+    // Xóa blog
     @GetMapping("/blogs/{id}/delete")
     public String deleteBlog(@PathVariable Integer id) {
-        blogRepository.deleteById(id);
+        blogService.deleteBlog(id);
         return "redirect:/admin/content";
     }
 }
-

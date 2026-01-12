@@ -60,7 +60,7 @@ public class DataSeeder implements CommandLineRunner {
             Staff admin = new Staff();
             admin.setName("Administrator");
             admin.setEmail("admin@ergoffice.com");
-            admin.setPassword("{noop}123456"); 
+            admin.setPassword("admin@ergoffice.com");
             admin.setPhone("0909090909");
             admin.setAddress("Head Office");
             admin.setGender("Male");

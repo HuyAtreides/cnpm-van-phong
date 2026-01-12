@@ -1,7 +1,7 @@
 package org.office.controller;
 
 import org.office.model.Blog;
-import org.office.repository.BlogRepository;
+import org.office.service.BlogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,60 +14,57 @@ import java.util.Date;
 public class StaffBlogController {
 
     @Autowired
-    private BlogRepository blogRepository;
+    private BlogService blogService;
 
+    // Hiển thị danh sách blog
     @GetMapping
     public String listBlogs(Model model) {
-        model.addAttribute("blogs", blogRepository.findAll());
+        model.addAttribute("blogs", blogService.getAllBlogs());
         return "staff/staff-blog-list";
     }
 
+    // Form tạo blog mới
     @GetMapping("/new")
     public String newBlogForm(Model model) {
         Blog blog = new Blog();
-        blog.setApproval(1); 
+        blog.setApproval(1);
+        blog.setPostingDate(new Date());
         model.addAttribute("blog", blog);
         return "staff/staff-blog-form";
     }
 
+    // Lưu blog (tạo mới hoặc cập nhật)
     @PostMapping("/save")
     public String saveBlog(@ModelAttribute Blog blog) {
-        System.out.println("=== BLOG SAVE DEBUG ===");
-        System.out.println("Blog ID: " + blog.getBlogId());
-        System.out.println("Blog Title: " + blog.getBlogTitle());
-        System.out.println("Blog Content: " + (blog.getContent() != null ? blog.getContent().substring(0, Math.min(50, blog.getContent().length())) : "null"));
-        System.out.println("Posting Date: " + blog.getPostingDate());
-        System.out.println("Approval: " + blog.getApproval());
-        
         if (blog.getPostingDate() == null) {
             blog.setPostingDate(new Date());
         }
         if (blog.getApproval() == null) {
             blog.setApproval(1);
         }
-        
-        try {
-            Blog saved = blogRepository.save(blog);
-            System.out.println("Blog saved successfully with ID: " + saved.getBlogId());
-        } catch (Exception e) {
-            System.err.println("Error saving blog: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
+
+        if (blog.getBlogId() == null) {
+            blogService.createBlog(blog);
+        } else {
+            blogService.updateBlog(blog.getBlogId(), blog);
         }
-        
+
         return "redirect:/staff/blogs";
     }
 
+    // Form chỉnh sửa blog
     @GetMapping("/{id}/edit")
     public String editBlog(@PathVariable Integer id, Model model) {
-        model.addAttribute("blog", blogRepository.findById(id).orElseThrow());
+        Blog blog = blogService.getBlogById(id)
+                .orElseThrow(() -> new RuntimeException("Blog not found"));
+        model.addAttribute("blog", blog);
         return "staff/staff-blog-form";
     }
 
+    // Xóa blog
     @GetMapping("/{id}/delete")
     public String deleteBlog(@PathVariable Integer id) {
-        blogRepository.deleteById(id);
+        blogService.deleteBlog(id);
         return "redirect:/staff/blogs";
     }
 }
-
