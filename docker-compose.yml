@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: cnpm-mysql-container
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456789
+      - MYSQL_DATABASE=cnpm
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./src/main/resources:/docker-entrypoint-initdb.d
+
+volumes:
+  db_data:
