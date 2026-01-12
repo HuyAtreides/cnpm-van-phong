@@ -27,7 +27,7 @@ public class BlogController {
     @GetMapping
     public String listBlogs(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "2") int size,
+            @RequestParam(defaultValue = "3") int size,
             @RequestParam(required = false) String title,
             @RequestParam(required = false)
             @DateTimeFormat(pattern = "yyyy-MM-dd") Date postingDate,
